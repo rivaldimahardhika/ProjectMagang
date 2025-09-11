@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Object Detection (YOLO)</h2>
+<video id="video" width="640" height="480" autoplay playsinline style="display:none;"></video>
+<canvas id="canvas" width="640" height="480" style="display:none;"></canvas>
+<img id="output" width="640" height="480">
+
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+{% endblock %}

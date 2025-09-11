@@ -1,0 +1,25 @@
+# Virtual environment
+venv/
+ENV/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# YOLO models (besar, taruh manual saja)
+models/*.pt
+
+# Dataset (jangan ikut ke GitHub)
+datasets/
+
+# Jupyter Notebook checkpoints (kalau ada)
+.ipynb_checkpoints/
+
+# IDE configs
+.vscode/
+.idea/
+
+# OS-specific files
+.DS_Store
+Thumbs.db
