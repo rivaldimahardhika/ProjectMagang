@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Live Monitoring</h2>
+<video id="monitor-video" width="640" height="480" autoplay playsinline></video>
+
+<script>
+navigator.mediaDevices.getUserMedia({ video: true })
+  .then(stream => {
+    document.getElementById("monitor-video").srcObject = stream;
+  })
+  .catch(err => {
+    console.error("Gagal akses kamera:", err);
+  });
+</script>
+{% endblock %}
