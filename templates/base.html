@@ -1,17 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <title>Flask CCTV + YOLO</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+  <title>{% block title %}Deteksi Objek GCS{% endblock %}</title>
 </head>
 <body>
-    <nav>
-        <a href="/">Home</a> |
-        <a href="/monitor">CCTV</a> |
-        <a href="/detect">Deteksi</a>
-    </nav>
-    <hr>
-    {% block content %}{% endblock %}
+  {% block content %}{% endblock %}
 </body>
 </html>

@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}CCTV GCS{% endblock %}
+{% block content %}
+<style>
+  html, body {
+    margin: 0; padding: 0; overflow-x: hidden;
+  }
+  .wrapper {
+    position: relative;
+    width: 100%;
+    background: url("{{ url_for('static', filename='img/background.png') }}") no-repeat top center;
+    background-size: 100% auto;
+  }
+  .btn { position: absolute; cursor: pointer; transform: translate(-50%, -50%); }
+  .btn-cctv { top: 7%; left: 44%; width: 5.5%; }
+  .btn-deteksi { top: 6.9%; left: 54%; width: 7%; }
+  .btn-dashboard { top: 7%; left: 66.5%; width: 10%; }
+  .btn-tentang { top: 7.2%; left: 81.5%; width: 12.5%; }
+  .btn-profile { top: 7.1%; left: 95%; width: 5.5%; }
+  .btn-login { top: 64%; left: 17%; width: 11%; }
+
+  /* logo */
+  .logo-gcs {
+    position: absolute;
+    top: 0.05%;
+    left: 1.45%;
+    width: 10%;
+    cursor: pointer;
+  }
+</style>
+
+<div class="wrapper" id="wrapper">
+  <!-- LOGO -->
+  <a href="{{ url_for('home') }}">
+    <img src="{{ url_for('static', filename='img/logo_gcs.png') }}" class="logo-gcs" alt="Logo GCS">
+  </a>
+
+  <!-- Tombol navigasi -->
+  <a href="{{ url_for('monitor') }}"><img src="{{ url_for('static', filename='img/CCTV.png') }}" class="btn btn-cctv"></a>
+  <a href="{{ url_for('detect') }}"><img src="{{ url_for('static', filename='img/deteksi.png') }}" class="btn btn-deteksi"></a>
+  <a href="{{ url_for('dashboard') }}"><img src="{{ url_for('static', filename='img/dashboard.png') }}" class="btn btn-dashboard"></a>
+  <a href="{{ url_for('about') }}"><img src="{{ url_for('static', filename='img/tentang-kami.png') }}" class="btn btn-tentang"></a>
+
+  {% if user %}
+    <a href="{{ url_for('profile') }}"><img src="{{ url_for('static', filename='img/profile.png') }}" class="btn btn-profile"></a>
+  {% else %}
+    <a href="{{ url_for('login') }}"><img src="{{ url_for('static', filename='img/login.png') }}" class="btn btn-login"></a>
+  {% endif %}
+</div>
+
+<!-- Helper tinggi -->
+<img id="bg-helper" src="{{ url_for('static', filename='img/background.png') }}" style="display:none;">
+<script>
+  const helper = document.getElementById("bg-helper");
+  const wrapper = document.getElementById("wrapper");
+  function setWrapperHeight() {
+    const aspect = helper.naturalHeight / helper.naturalWidth;
+    wrapper.style.height = wrapper.offsetWidth * aspect + "px";
+    document.body.style.height = wrapper.style.height;
+  }
+  helper.onload = setWrapperHeight;
+  window.addEventListener("resize", setWrapperHeight);
+</script>
+{% endblock %}
