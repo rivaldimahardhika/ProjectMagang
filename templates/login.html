@@ -1,13 +1,140 @@
 {% extends "base.html" %}
+{% block title %}Login - CCTV GCS{% endblock %}
 {% block content %}
-<h2>Login</h2>
-<form method="POST" action="{{ url_for('login') }}">
-    <label>ID Pengguna:</label><br>
-    <input type="text" name="username" required><br><br>
+<style>
+  @font-face {
+    font-family: 'Poppins';
+    src: url("{{ url_for('static', filename='font/Poppins-Regular.ttf') }}") format('truetype');
+    font-weight: normal;
+  }
+  @font-face {
+    font-family: 'Poppins';
+    src: url("{{ url_for('static', filename='font/Poppins-Bold.ttf') }}") format('truetype');
+    font-weight: bold;
+  }
 
-    <label>Password:</label><br>
-    <input type="password" name="password" required><br><br>
+  html, body {
+    margin: 0; padding: 0; overflow-x: hidden;
+    font-family: 'Poppins', sans-serif;
+  }
+  .wrapper {
+    position: relative;
+    width: 100%;
+    background: url("{{ url_for('static', filename='img/background_login.png') }}") no-repeat top center;
+    background-size: 100% auto;
+  }
 
-    <button type="submit">Login</button>
-</form>
+  /* Logo */
+  .logo-gcs {
+    position: absolute;
+    top: 0.05%;
+    left: 1.45%;
+    width: 10%;
+    cursor: pointer;
+  }
+
+  /* Box Login */
+  .login-box {
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255,255,255,0.08);
+    backdrop-filter: blur(6px);
+    border-radius: 20px;
+    padding: 30px 40px;
+    width: 320px;
+    text-align: center;
+    box-shadow: 0px 4px 15px rgba(0,0,0,0.3);
+    font-family: 'Poppins', sans-serif;
+  }
+
+  .login-box img.avatar {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    margin-bottom: 20px;
+    background: rgba(255,255,255,0.2);
+    padding: 10px;
+  }
+
+  .login-box label {
+    display: block;
+    text-align: left;
+    margin: 12px 0 5px;
+    color: #FFCE5E;
+    font-weight: bold;
+  }
+
+  .login-box input {
+    width: 100%;
+    padding: 10px;
+    border-radius: 25px;
+    border: none;
+    margin-bottom: 15px;
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    text-align: center;
+    font-size: 14px;
+    font-family: 'Poppins', sans-serif;
+  }
+
+  .login-box input::placeholder {
+    color: #ddd;
+  }
+
+  .login-box button {
+    width: 100%;
+    padding: 12px;
+    border-radius: 25px;
+    border: none;
+    background: #faa003;
+    color: #fff;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    font-family: 'Poppins', sans-serif;
+    transition: background 0.3s ease;
+  }
+
+  .login-box button:hover {
+    background: #fa003f;
+  }
+</style>
+
+<div class="wrapper" id="wrapper">
+  <!-- LOGO -->
+  <a href="{{ url_for('home') }}">
+    <img src="{{ url_for('static', filename='img/logo_gcs.png') }}" class="logo-gcs" alt="Logo GCS">
+  </a>
+
+  <!-- Box Login -->
+  <div class="login-box">
+    <img src="{{ url_for('static', filename='img/profile.png') }}" class="avatar" alt="Avatar">
+    <form method="POST" action="{{ url_for('login') }}">
+      <label>Username</label>
+      <input type="text" name="username" placeholder="Masukkan Username" required>
+
+      <label>Password</label>
+      <input type="password" name="password" placeholder="Masukkan Password" required>
+
+      <button type="submit">Login</button>
+    </form>
+  </div>
+</div>
+
+<!-- Helper tinggi -->
+<img id="bg-helper" src="{{ url_for('static', filename='img/background_login.png') }}" style="display:none;">
+
+<script>
+  const helper = document.getElementById("bg-helper");
+  const wrapper = document.getElementById("wrapper");
+  function setWrapperHeight() {
+    const aspect = helper.naturalHeight / helper.naturalWidth;
+    wrapper.style.height = wrapper.offsetWidth * aspect + "px";
+    document.body.style.height = wrapper.style.height;
+  }
+  helper.onload = setWrapperHeight;
+  window.addEventListener("resize", setWrapperHeight);
+</script>
 {% endblock %}

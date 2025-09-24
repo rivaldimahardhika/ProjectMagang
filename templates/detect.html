@@ -1,137 +1,338 @@
 {% extends "base.html" %}
 {% block title %}Deteksi CCTV{% endblock %}
 {% block content %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Deteksi CCTV</title>
+<style>
+  html, body { margin: 0; padding: 0; overflow-x: hidden; }
+  .wrapper {
+    position: relative;
+    width: 100%;
+    background: url("{{ url_for('static', filename='img/backgroundcctv.png') }}") no-repeat top center;
+    background-size: 100% auto;
+  }
 
-  <style>
-    html, body { margin: 0; padding: 0; overflow-x: hidden; }
-    .wrapper {
-      position: relative;
-      width: 100%;
-      background: url("{{ url_for('static', filename='img/backgroundcctv.png') }}") no-repeat top center;
-      background-size: 100% auto;
-    }
+  /* tombol navigasi */
+  .btn { position: absolute; cursor: pointer; transform: translate(-50%, -50%); }
+  .btn-cctv { top: 7%; left: 44%; width: 5.5%; }
+  .btn-deteksi { top: 6.9%; left: 54%; width: 7%; }
+  .btn-dashboard { top: 7%; left: 66.5%; width: 10%; }
+  .btn-tentang { top: 7.2%; left: 81.5%; width: 12.5%; }
+  .btn-profile { top: 7.1%; left: 95%; width: 5.5%; }
 
-    /* tombol navigasi */
-    .btn { position: absolute; cursor: pointer; transform: translate(-50%, -50%); }
-    .btn-cctv { top: 7%; left: 44%; width: 5.5%; }
-    .btn-deteksi { top: 6.9%; left: 54%; width: 7%; }
-    .btn-dashboard { top: 7%; left: 66.5%; width: 10%; }
-    .btn-tentang { top: 7.2%; left: 81.5%; width: 12.5%; }
-    .btn-profile { top: 7.1%; left: 95%; width: 5.5%; }
-
-    /* logo */
-    .logo-gcs {
+  /* logo */
+  .logo-gcs {
     position: absolute;
     top: 0.05%;
     left: 1.45%;
-    width: 10%; 
+    width: 10%;
     cursor: pointer;
   }
 
-    /* hasil YOLO ditampilkan di posisi monitor */
-    #output {
-      position: absolute;
-      top: 16%;
-      left: 3.5%;
-      width: 71.75%;
-      height: 79.5%;
-      border-radius: 25px;
-      background: #000;
-      object-fit: contain;
-      z-index: 10;
-    }
+  /* hasil YOLO (sama ukuran & posisi seperti monitor) */
+  #output {
+    position: absolute;
+    top: 16%;
+    left: 3.5%;
+    width: 71.75%;
+    height: 79.5%;
+    border-radius: 25px;
+    background: #000;
+    object-fit: contain;
+    z-index: 10;
+  }
 
-    /* video & canvas hidden */
-    #video, #canvas { display: none; }
-  </style>
-</head>
-<body>
-  <div class="wrapper" id="wrapper">
-    <!-- LOGO -->
-    <a href="{{ url_for('home') }}">
-      <img src="{{ url_for('static', filename='img/logo_gcs.png') }}" class="logo-gcs" alt="Logo GCS">
-    </a>
+  /* Dropdown kamera: di samping kanan */
+  .camera-select {
+    position: absolute;
+    top: 23.5%;
+    left: 86.3%;
+    width: 18%;
+    transform: translate(-50%, -50%);
+    background-color: #5b863f;
+    color: #FFCE5E;
+    border: none;
+    border-radius: 5px;
+    padding: 0.4em;
+    font-size: 1vw;
+    cursor: pointer;
+    z-index: 50;
+  }
+  .camera-select option {
+    background-color: #5b863f;
+    color: #fff;
+  }
 
-    <!-- tombol navigasi -->
-    <a href="{{ url_for('monitor') }}"><img src="{{ url_for('static', filename='img/CCTV.png') }}" class="btn btn-cctv"></a>
-    <a href="{{ url_for('detect') }}"><img src="{{ url_for('static', filename='img/deteksi.png') }}" class="btn btn-deteksi"></a>
-    <a href="{{ url_for('dashboard') }}"><img src="{{ url_for('static', filename='img/dashboard.png') }}" class="btn btn-dashboard"></a>
-    <a href="{{ url_for('about') }}"><img src="{{ url_for('static', filename='img/tentang-kami.png') }}" class="btn btn-tentang"></a>
-    <a href="{{ url_for('profile') }}"><img src="{{ url_for('static', filename='img/profile.png') }}" class="btn btn-profile"></a>
+  /* Info Panel */
+  .info-panel {
+    position: absolute;
+    top: 25.5%;
+    left: 76.5%;
+    width: 18%;
+    background: #5b863f;
+    border-radius: 10px;
+    padding: 12px;
+    font-size: 1vw;
+    line-height: 1.8em;
+    z-index: 50;
+  }
+  .info-row {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr; /* label | : | value */
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  .info-row strong {
+    color: #FFCE5E;
+    font-weight: 600;
+    text-align: left;
+    padding-right: 4px;
+  }
+  .info-row .colon {
+    text-align: center;
+    width: 10px;
+    color: #FFCE5E;
+  }
+  .info-row span {
+    color: #fff;
+    text-align: left;
+    padding-left: 4px;
+  }
 
-    <!-- hasil YOLO -->
-    <img id="output" alt="YOLO Output">
+  /* video & canvas hidden */
+  #video, #canvas { display: none; }
 
-    <!-- hidden elemen -->
-    <video id="video" autoplay playsinline></video>
-    <canvas id="canvas" width="640" height="480"></canvas>
+  /* Popup Profile */
+  .profile-popup {
+    position: absolute;
+    width: 220px;
+    background: #5b863f;
+    border-radius: 20px;
+    padding: 15px;
+    display: none;
+    box-shadow: 0px 4px 10px rgba(0,0,0,0.3);
+    z-index: 9999;
+  }
+  .profile-popup h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: normal;
+    color: #FFCE5E;
+    text-align: center;
+    font-family: 'Poppins', sans-serif;
+  }
+  .logout-btn {
+    display: block;
+    text-align: center;
+    text-decoration: none;
+    margin-top: 12px;
+    width: 100%;
+    padding: 8px 0;
+    background: #faa003;
+    color: #fff;
+    border-radius: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    font-family: 'Poppins', sans-serif;
+  }
+  .logout-btn:hover {
+    background: #fa003f;
+  }
+</style>
+
+<div class="wrapper" id="wrapper">
+  <!-- LOGO -->
+  <a href="{{ url_for('home') }}">
+    <img src="{{ url_for('static', filename='img/logo_gcs.png') }}" class="logo-gcs" alt="Logo GCS">
+  </a>
+
+  <!-- tombol navigasi -->
+  <a href="{{ url_for('monitor') }}"><img src="{{ url_for('static', filename='img/CCTV.png') }}" class="btn btn-cctv"></a>
+  <a href="{{ url_for('detect') }}"><img src="{{ url_for('static', filename='img/deteksi.png') }}" class="btn btn-deteksi"></a>
+  <a href="{{ url_for('dashboard') }}"><img src="{{ url_for('static', filename='img/dashboard.png') }}" class="btn btn-dashboard"></a>
+  <a href="{{ url_for('about') }}"><img src="{{ url_for('static', filename='img/tentang-kami.png') }}" class="btn btn-tentang"></a>
+
+  {% if user %}
+    <!-- Profile button -->
+    <img src="{{ url_for('static', filename='img/profile.png') }}" class="btn btn-profile" id="profileBtn">
+    <!-- Popup Profile -->
+    <div class="profile-popup" id="profilePopup">
+      <h3>{{ user.username }}</h3>
+      <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+    </div>
+  {% else %}
+    <a href="{{ url_for('login') }}"><img src="{{ url_for('static', filename='img/login.png') }}" class="btn btn-profile"></a>
+  {% endif %}
+
+  <!-- hasil YOLO -->
+  <img id="output" alt="YOLO Output">
+
+  <!-- Pilihan Kamera -->
+  <select id="cameraSelect" class="camera-select">
+    <option>Loading cameras...</option>
+  </select>
+
+  <!-- Info Panel -->
+  <div class="info-panel">
+    <div class="info-row">
+      <strong>FPS</strong><div class="colon">:</div><span id="fps">0</span>
+    </div>
+    <div class="info-row">
+      <strong>Waktu</strong><div class="colon">:</div><span id="datetime">--/--/---- --:--:--</span>
+    </div>
+    <div class="info-row">
+      <strong>Count</strong><div class="colon">:</div><span id="count">0</span>
+    </div>
   </div>
 
-  <!-- helper image -->
-  <img id="bg-helper" src="{{ url_for('static', filename='img/backgroundcctv.png') }}" style="display:none;">
+  <!-- hidden elemen -->
+  <video id="video" autoplay playsinline></video>
+  <canvas id="canvas" width="640" height="480"></canvas>
+</div>
 
-  <script>
-    const video = document.getElementById("video");
-    const canvas = document.getElementById("canvas");
-    const ctx = canvas.getContext("2d");
-    const output = document.getElementById("output");
+<!-- helper image -->
+<img id="bg-helper" src="{{ url_for('static', filename='img/backgroundcctv.png') }}" style="display:none;">
 
-    const helper = document.getElementById("bg-helper");
-    const wrapper = document.getElementById("wrapper");
-    function setWrapperHeight() {
-      const aspect = helper.naturalHeight / helper.naturalWidth;
-      wrapper.style.height = wrapper.offsetWidth * aspect + "px";
-      document.body.style.height = wrapper.style.height;
+<script>
+  const video = document.getElementById("video");
+  const canvas = document.getElementById("canvas");
+  const ctx = canvas.getContext("2d");
+  const output = document.getElementById("output");
+  const cameraSelect = document.getElementById("cameraSelect");
+
+  const helper = document.getElementById("bg-helper");
+  const wrapper = document.getElementById("wrapper");
+  function setWrapperHeight() {
+    const aspect = helper.naturalHeight / helper.naturalWidth;
+    wrapper.style.height = wrapper.offsetWidth * aspect + "px";
+    document.body.style.height = wrapper.style.height;
+  }
+  helper.onload = setWrapperHeight;
+  window.addEventListener("resize", setWrapperHeight);
+
+  // === POPUP PROFILE ===
+  const profileBtn = document.getElementById("profileBtn");
+  const profilePopup = document.getElementById("profilePopup");
+  function positionPopup() {
+    if (!profileBtn || !profilePopup) return;
+    const rect = profileBtn.getBoundingClientRect();
+    const wrapperRect = wrapper.getBoundingClientRect();
+    profilePopup.style.top = (rect.bottom - wrapperRect.top + 10) + "px";
+    profilePopup.style.left = (rect.right - wrapperRect.left - profilePopup.offsetWidth) + "px";
+  }
+  if (profileBtn) {
+    profileBtn.addEventListener("click", () => {
+      if (profilePopup.style.display === "block") {
+        profilePopup.style.display = "none";
+      } else {
+        profilePopup.style.display = "block";
+        positionPopup();
+      }
+    });
+    document.addEventListener("click", (e) => {
+      if (!profilePopup.contains(e.target) && e.target !== profileBtn) {
+        profilePopup.style.display = "none";
+      }
+    });
+    window.addEventListener("resize", () => {
+      if (profilePopup.style.display === "block") positionPopup();
+    });
+    window.addEventListener("scroll", () => {
+      if (profilePopup.style.display === "block") positionPopup();
+    });
+  }
+
+  // === PILIHAN KAMERA ===
+  async function getCameras() {
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const videoDevices = devices.filter(d => d.kind === "videoinput");
+      cameraSelect.innerHTML = "";
+      videoDevices.forEach((device, index) => {
+        const option = document.createElement("option");
+        option.value = device.deviceId;
+        option.text = device.label || `Camera ${index + 1}`;
+        cameraSelect.appendChild(option);
+      });
+      return videoDevices;
+    } catch (err) {
+      console.error("Gagal dapat kamera:", err);
+      return [];
     }
-    helper.onload = setWrapperHeight;
-    window.addEventListener("resize", setWrapperHeight);
+  }
 
-    async function startCamera() {
-      try {
+  async function startCamera(deviceId) {
+    try {
+      if (!deviceId) {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
         video.srcObject = stream;
-      } catch (err) {
-        console.error("Gagal akses kamera:", err);
+        return;
       }
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { deviceId: { exact: deviceId } } });
+      if (video.srcObject) {
+        video.srcObject.getTracks().forEach(t => t.stop());
+      }
+      video.srcObject = stream;
+    } catch (err) {
+      console.error("Gagal akses kamera:", err);
     }
+  }
 
-    async function sendFrame() {
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      const blob = await new Promise(r => canvas.toBlob(r, "image/jpeg"));
+  cameraSelect.addEventListener("change", () => {
+    startCamera(cameraSelect.value);
+  });
 
-      if (!blob) return;
-      const formData = new FormData();
-      formData.append("frame", blob, "frame.jpg");
+  // === YOLO STREAM ===
+  let lastTime = performance.now();
+  async function sendFrame() {
+    if (!video || video.readyState < 2) return;
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const blob = await new Promise(r => canvas.toBlob(r, "image/jpeg"));
+    if (!blob) return;
 
-      try {
-        const response = await fetch("/detect_api", { method: "POST", body: formData });
-        if (response.ok) {
-          const blobResp = await response.blob();
-          if (blobResp.size > 0) {
-            const objectUrl = URL.createObjectURL(blobResp);
-            output.src = objectUrl;
-            output.onload = () => URL.revokeObjectURL(objectUrl);
-          }
-        } else {
-          console.error("Server error:", response.status);
+    const formData = new FormData();
+    formData.append("frame", blob, "frame.jpg");
+
+    try {
+      const start = performance.now();
+      const response = await fetch("/detect_api", { method: "POST", body: formData });
+      const end = performance.now();
+      const fps = (1000 / (end - lastTime)).toFixed(1);
+      lastTime = end;
+      document.getElementById("fps").textContent = fps;
+
+      if (response.ok) {
+        const countHeader = response.headers.get("X-Count");
+        if (countHeader) {
+          document.getElementById("count").textContent = countHeader;
         }
-      } catch (err) {
-        console.error("Fetch error:", err);
+
+        const blobResp = await response.blob();
+        if (blobResp.size > 0) {
+          const objectUrl = URL.createObjectURL(blobResp);
+          output.src = objectUrl;
+          output.onload = () => URL.revokeObjectURL(objectUrl);
+        }
       }
+    } catch (err) {
+      console.error("Fetch error:", err);
     }
 
-    video.addEventListener("loadeddata", () => {
-      setInterval(sendFrame, 700); // kirim frame tiap 0.7 detik
-    });
+    // update waktu realtime
+    const now = new Date();
+    const waktu = now.toLocaleDateString() + " " + now.toLocaleTimeString();
+    document.getElementById("datetime").textContent = waktu;
+  }
 
-    startCamera();
-  </script>
-</body>
-</html>
+  video.addEventListener("loadeddata", () => {
+    setInterval(sendFrame, 700);
+  });
+
+  getCameras().then(devs => {
+    if (devs.length > 0) {
+      cameraSelect.value = devs[0].deviceId;
+      startCamera(devs[0].deviceId);
+    } else {
+      cameraSelect.innerHTML = "<option>No cameras found</option>";
+    }
+  });
+</script>
 {% endblock %}

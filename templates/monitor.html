@@ -1,27 +1,23 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Monitor CCTV</title>
+{% extends "base.html" %}
+{% block title %}Monitor CCTV{% endblock %}
+{% block content %}
+<style>
+  html, body { margin: 0; padding: 0; overflow-x: hidden; }
+  .wrapper {
+    position: relative;
+    width: 100%;
+    background: url("{{ url_for('static', filename='img/backgroundcctv.png') }}") no-repeat top center;
+    background-size: 100% auto;
+  }
+  .btn { position: absolute; cursor: pointer; transform: translate(-50%, -50%); }
+  .btn-cctv { top: 7%; left: 44%; width: 5.5%; }
+  .btn-deteksi { top: 6.9%; left: 54%; width: 7%; }
+  .btn-dashboard { top: 7%; left: 66.5%; width: 10%; }
+  .btn-tentang { top: 7.2%; left: 81.5%; width: 12.5%; }
+  .btn-profile { top: 7.1%; left: 95%; width: 5.5%; }
 
-  <style>
-    html, body { margin: 0; padding: 0; overflow-x: hidden; }
-    .wrapper {
-      position: relative;
-      width: 100%;
-      background: url("{{ url_for('static', filename='img/backgroundcctv.png') }}") no-repeat top center;
-      background-size: 100% auto;
-    }
-    .btn { position: absolute; cursor: pointer; transform: translate(-50%, -50%); }
-    .btn-cctv { top: 7%; left: 44%; width: 5.5%; }
-    .btn-deteksi { top: 6.9%; left: 54%; width: 7%; }
-    .btn-dashboard { top: 7%; left: 66.5%; width: 10%; }
-    .btn-tentang { top: 7.2%; left: 81.5%; width: 12.5%; }
-    .btn-profile { top: 7.1%; left: 95%; width: 5.5%; }
-
-    /* logo */
-    .logo-gcs {
+  /* logo */
+  .logo-gcs {
     position: absolute;
     top: 0.05%;
     left: 1.45%;
@@ -29,124 +25,202 @@
     cursor: pointer;
   }
 
-    .camera-select {
-      position: absolute;
-      top: 23.5%; left: 86.3%;
-      width: 18%;
-      transform: translate(-50%, -50%);
-      background-color: #5b863f;
-      color: #FFCE5E;
-      border: none; border-radius: 5px;
-      padding: 0.4em;
-      font-size: 1vw;
-      cursor: pointer;
-    }
+  /* dropdown kamera */
+  .camera-select {
+    position: absolute;
+    top: 23.5%; left: 86.3%;
+    width: 18%;
+    transform: translate(-50%, -50%);
+    background-color: #5b863f;
+    color: #FFCE5E;
+    border: none; border-radius: 5px;
+    padding: 0.4em;
+    font-size: 1vw;
+    cursor: pointer;
+  }
+  .camera-select option {
+    background-color: #5b863f;
+    color: #fff;
+  }
 
-    .camera-select option {
-      background-color: #5b863f;
-      color: #fff;
-    }
+  #monitor-video {
+    position: absolute;
+    top: 16%;
+    left: 3.5%;
+    width: 71.75%;
+    height: 79.5%;
+    border-radius: 25px;
+    background: #000;
+    object-fit: cover;
+  }
 
-    #monitor-video {
-      position: absolute;
-      top: 16%;
-      left: 3.5%;
-      width: 71.75%;
-      height: 79.5%;
-      border-radius: 25px;
-      background: #000;
-      object-fit: cover;
-    }
-  </style>
-</head>
-<body>
-  <div class="wrapper" id="wrapper">
-    <!-- LOGO -->
-    <a href="{{ url_for('home') }}">
-      <img src="{{ url_for('static', filename='img/logo_gcs.png') }}" class="logo-gcs" alt="Logo GCS">
-    </a>
+  /* Popup Profile */
+  .profile-popup {
+    position: absolute;
+    width: 220px;
+    background: #5b863f;
+    border-radius: 20px;
+    padding: 15px;
+    display: none;
+    box-shadow: 0px 4px 10px rgba(0,0,0,0.3);
+    z-index: 9999;
+  }
+  .profile-popup h3 {
+    margin: 0;
+    font-size: 16px;  
+    font-weight: normal;
+    color: #FFCE5E;
+    text-align: center;
+    font-family: 'Poppins', sans-serif;
+  }
 
-    <!-- tombol navigasi -->
-    <a href="{{ url_for('monitor') }}"><img src="{{ url_for('static', filename='img/CCTV.png') }}" class="btn btn-cctv"></a>
-    <a href="{{ url_for('detect') }}"><img src="{{ url_for('static', filename='img/deteksi.png') }}" class="btn btn-deteksi"></a>
-    <a href="{{ url_for('dashboard') }}"><img src="{{ url_for('static', filename='img/dashboard.png') }}" class="btn btn-dashboard"></a>
-    <a href="{{ url_for('about') }}"><img src="{{ url_for('static', filename='img/tentang-kami.png') }}" class="btn btn-tentang"></a>
-    <a href="{{ url_for('profile') }}"><img src="{{ url_for('static', filename='img/profile.png') }}" class="btn btn-profile"></a>
+  .logout-btn {
+    display: block;
+    text-align: center;
+    text-decoration: none;
+    margin-top: 12px;
+    width: 100%;
+    padding: 8px 0;
+    background: #faa003;
+    color: #fff;
+    border-radius: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    font-family: 'Poppins', sans-serif;
+  }
+  .logout-btn:hover {
+    background: #fa003f;
+  }
+</style>
 
-    <!-- dropdown camera -->
-    <select id="cameraSelect" class="camera-select">
-      <option>Loading cameras...</option>
-    </select>
+<div class="wrapper" id="wrapper">
+  <!-- LOGO -->
+  <a href="{{ url_for('home') }}">
+    <img src="{{ url_for('static', filename='img/logo_gcs.png') }}" class="logo-gcs" alt="Logo GCS">
+  </a>
 
-    <!-- FRAME + VIDEO -->
-    <div id="monitor-frame">
-      <video id="monitor-video" autoplay playsinline></video>
+  <!-- Tombol navigasi -->
+  <a href="{{ url_for('monitor') }}"><img src="{{ url_for('static', filename='img/CCTV.png') }}" class="btn btn-cctv"></a>
+  <a href="{{ url_for('detect') }}"><img src="{{ url_for('static', filename='img/deteksi.png') }}" class="btn btn-deteksi"></a>
+  <a href="{{ url_for('dashboard') }}"><img src="{{ url_for('static', filename='img/dashboard.png') }}" class="btn btn-dashboard"></a>
+  <a href="{{ url_for('about') }}"><img src="{{ url_for('static', filename='img/tentang-kami.png') }}" class="btn btn-tentang"></a>
+
+  {% if user %}
+    <!-- Profile button -->
+    <img src="{{ url_for('static', filename='img/profile.png') }}" class="btn btn-profile" id="profileBtn">
+
+    <!-- Popup Profile -->
+    <div class="profile-popup" id="profilePopup">
+      <h3>{{ user.username }}</h3>
+      <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
     </div>
+  {% else %}
+    <a href="{{ url_for('login') }}"><img src="{{ url_for('static', filename='img/login.png') }}" class="btn btn-profile"></a>
+  {% endif %}
+
+  <!-- dropdown camera -->
+  <select id="cameraSelect" class="camera-select">
+    <option>Loading cameras...</option>
+  </select>
+
+  <!-- FRAME + VIDEO -->
+  <div id="monitor-frame">
+    <video id="monitor-video" autoplay playsinline></video>
   </div>
+</div>
 
-  <!-- helper image -->
-  <img id="bg-helper" src="{{ url_for('static', filename='img/backgroundcctv.png') }}" style="display:none;">
+<!-- helper image -->
+<img id="bg-helper" src="{{ url_for('static', filename='img/backgroundcctv.png') }}" style="display:none;">
 
-  <script>
-    const helper = document.getElementById("bg-helper");
-    const wrapper = document.getElementById("wrapper");
-    function setWrapperHeight() {
-      const aspect = helper.naturalHeight / helper.naturalWidth;
-      wrapper.style.height = wrapper.offsetWidth * aspect + "px";
-      document.body.style.height = wrapper.style.height;
-    }
-    helper.onload = setWrapperHeight;
-    window.addEventListener("resize", setWrapperHeight);
+<script>
+  const helper = document.getElementById("bg-helper");
+  const wrapper = document.getElementById("wrapper");
+  function setWrapperHeight() {
+    const aspect = helper.naturalHeight / helper.naturalWidth;
+    wrapper.style.height = wrapper.offsetWidth * aspect + "px";
+    document.body.style.height = wrapper.style.height;
+  }
+  helper.onload = setWrapperHeight;
+  window.addEventListener("resize", setWrapperHeight);
 
-    const monitorVideo = document.getElementById("monitor-video");
-    const cameraSelect = document.getElementById("cameraSelect");
-    let currentStream = null;
+  // === Popup Profile ===
+  const profileBtn = document.getElementById("profileBtn");
+  const profilePopup = document.getElementById("profilePopup");
 
-    async function startCamera(deviceId) {
-      if (currentStream) {
-        currentStream.getTracks().forEach(track => track.stop());
+  function positionPopup() {
+    if (!profileBtn || !profilePopup) return;
+    const rect = profileBtn.getBoundingClientRect();
+    const wrapperRect = wrapper.getBoundingClientRect();
+    profilePopup.style.top = (rect.bottom - wrapperRect.top + 10) + "px";
+    profilePopup.style.left = (rect.right - wrapperRect.left - profilePopup.offsetWidth) + "px";
+  }
+
+  if (profileBtn) {
+    profileBtn.addEventListener("click", () => {
+      if (profilePopup.style.display === "block") {
+        profilePopup.style.display = "none";
+      } else {
+        profilePopup.style.display = "block";
+        positionPopup();
       }
-      try {
-        const constraints = deviceId 
-          ? { video: { deviceId: { exact: deviceId } } } 
-          : { video: true };
-        const stream = await navigator.mediaDevices.getUserMedia(constraints);
-        currentStream = stream;
-        monitorVideo.srcObject = stream;
-      } catch (err) {
-        alert("Gagal akses kamera: " + err.message);
-        console.error("Gagal akses kamera:", err);
-      }
-    }
-
-    async function loadCameras() {
-      try {
-        const devices = await navigator.mediaDevices.enumerateDevices();
-        const videoDevices = devices.filter(device => device.kind === "videoinput");
-
-        cameraSelect.innerHTML = "";
-        videoDevices.forEach((device, index) => {
-          const option = document.createElement("option");
-          option.value = device.deviceId;
-          option.text = device.label || `Camera ${index + 1}`;
-          cameraSelect.appendChild(option);
-        });
-
-        if (videoDevices.length > 0) {
-          startCamera(videoDevices[0].deviceId);
-        } else {
-          cameraSelect.innerHTML = "<option>No cameras found</option>";
-        }
-      } catch (err) {
-        console.error("Gagal memuat kamera:", err);
-      }
-    }
-
-    cameraSelect.addEventListener("change", () => {
-      startCamera(cameraSelect.value);
     });
+    document.addEventListener("click", (e) => {
+      if (!profilePopup.contains(e.target) && e.target !== profileBtn) {
+        profilePopup.style.display = "none";
+      }
+    });
+    window.addEventListener("resize", () => {
+      if (profilePopup.style.display === "block") positionPopup();
+    });
+    window.addEventListener("scroll", () => {
+      if (profilePopup.style.display === "block") positionPopup();
+    });
+  }
 
-    window.addEventListener("DOMContentLoaded", loadCameras);
-  </script>
-</body>
-</html>
+  // === KAMERA ===
+  const monitorVideo = document.getElementById("monitor-video");
+  const cameraSelect = document.getElementById("cameraSelect");
+  let currentStream = null;
+
+  async function startCamera(deviceId) {
+    if (currentStream) {
+      currentStream.getTracks().forEach(track => track.stop());
+    }
+    try {
+      const constraints = deviceId 
+        ? { video: { deviceId: { exact: deviceId } } } 
+        : { video: true };
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      currentStream = stream;
+      monitorVideo.srcObject = stream;
+    } catch (err) {
+      alert("Gagal akses kamera: " + err.message);
+    }
+  }
+
+  async function loadCameras() {
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const videoDevices = devices.filter(device => device.kind === "videoinput");
+      cameraSelect.innerHTML = "";
+      videoDevices.forEach((device, index) => {
+        const option = document.createElement("option");
+        option.value = device.deviceId;
+        option.text = device.label || `Camera ${index + 1}`;
+        cameraSelect.appendChild(option);
+      });
+      if (videoDevices.length > 0) {
+        startCamera(videoDevices[0].deviceId);
+      } else {
+        cameraSelect.innerHTML = "<option>No cameras found</option>";
+      }
+    } catch (err) {
+      console.error("Gagal memuat kamera:", err);
+    }
+  }
+  cameraSelect.addEventListener("change", () => {
+    startCamera(cameraSelect.value);
+  });
+  window.addEventListener("DOMContentLoaded", loadCameras);
+</script>
+{% endblock %}

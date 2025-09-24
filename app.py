@@ -80,7 +80,11 @@ def detect():
     if "user_id" not in session:
         flash("Silakan login untuk mengakses halaman ini", "warning")
         return redirect(url_for("login"))
-    return render_template("detect.html")
+
+    cam_id = request.args.get("cam_id", "0")  # default webcam
+    user = User.query.get(session["user_id"])
+    return render_template("detect.html", user=user, cam_id=cam_id)
+
 
 
 @app.route("/dashboard")
@@ -125,48 +129,44 @@ def login():
 
 @app.route("/logout")
 def logout():
-    # hapus sesi user
     session.pop("user_id", None)
     flash("Anda berhasil logout", "success")
     return redirect(url_for("home"))
+
 
 @app.route("/detect_api", methods=["POST"])
 def detect_api():
     try:
         if "frame" not in request.files:
-            print("❌ Tidak ada file 'frame' dikirim")
             return jsonify({"error": "No frame uploaded"}), 400
 
+        # Baca file & konversi ke OpenCV
         file = request.files["frame"].read()
-        print("📥 Frame diterima, ukuran byte:", len(file))
-
         npimg = np.frombuffer(file, np.uint8)
         frame = cv2.imdecode(npimg, cv2.IMREAD_COLOR)
 
         if frame is None:
-            print("❌ cv2.imdecode gagal, frame kosong")
             return jsonify({"error": "Invalid image"}), 400
 
-        # jalankan YOLO lewat detector
+        # Jalankan YOLO
         results = detector.model(frame)
-        print("✅ YOLO berhasil jalan, jumlah deteksi:", len(results[0].boxes))
+        count = len(results[0].boxes)  # jumlah deteksi
 
+        # Plot hasil
         annotated_frame = results[0].plot()
 
-        # encode ke JPEG
+        # Encode ke JPEG
         ok, buffer = cv2.imencode(".jpg", annotated_frame)
         if not ok:
-            print("❌ Gagal encode JPEG")
             return jsonify({"error": "Encode failed"}), 500
 
-        print("📤 Mengirim hasil ke client, ukuran:", len(buffer))
-        return send_file(
-            io.BytesIO(buffer.tobytes()),
-            mimetype="image/jpeg"
-        )
+        # Bungkus response + header count
+        response = Response(buffer.tobytes(), mimetype="image/jpeg")
+        response.headers["X-Count"] = str(count)
+        return response
+
     except Exception as e:
-        print("🔥 ERROR di detect_api:", str(e))
-        traceback.print_exc()
+        traceback.print_exc()  # biar error tetap kelihatan di log server
         return jsonify({"error": str(e)}), 500
 
 

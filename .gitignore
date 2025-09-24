@@ -8,7 +8,8 @@ __pycache__/
 *.pyo
 
 # YOLO models (besar, taruh manual saja)
-models/*.pt
+!models/best.pt
+
 
 # Dataset (jangan ikut ke GitHub)
 datasets/
