@@ -6,6 +6,7 @@
   .wrapper {
     position: relative;
     width: 100%;
+    min-height: 100vh;
     background: url("{{ url_for('static', filename='img/backgroundcctv.png') }}") no-repeat top center;
     background-size: 100% auto;
   }
@@ -27,7 +28,7 @@
     cursor: pointer;
   }
 
-  /* hasil YOLO (sama ukuran & posisi seperti monitor) */
+  /* hasil YOLO (monitor) */
   #output {
     position: absolute;
     top: 16%;
@@ -40,7 +41,7 @@
     z-index: 10;
   }
 
-  /* Dropdown kamera: di samping kanan */
+  /* Dropdown kamera */
   .camera-select {
     position: absolute;
     top: 23.5%;
@@ -65,7 +66,7 @@
   .info-panel {
     position: absolute;
     top: 25.5%;
-    left: 76.5%;
+    left: 76.33%;
     width: 18%;
     background: #5b863f;
     border-radius: 10px;
@@ -76,7 +77,7 @@
   }
   .info-row {
     display: grid;
-    grid-template-columns: 1fr auto 1fr; /* label | : | value */
+    grid-template-columns: 1fr auto 1fr;
     align-items: center;
     margin-bottom: 6px;
   }
@@ -97,8 +98,16 @@
     padding-left: 4px;
   }
 
-  /* video & canvas hidden */
-  #video, #canvas { display: none; }
+  /* Tombol ON/OFF */
+  .btn-on, .btn-off {
+    padding: 4px 10px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.9vw;
+    cursor: pointer;
+  }
+  .btn-on { background-color: #28a745; color: white; }
+  .btn-off { background-color: #dc3545; color: white; }
 
   /* Popup Profile */
   .profile-popup {
@@ -133,9 +142,10 @@
     cursor: pointer;
     font-family: 'Poppins', sans-serif;
   }
-  .logout-btn:hover {
-    background: #fa003f;
-  }
+  .logout-btn:hover { background: #fa003f; }
+
+  /* hidden video & canvas */
+  #video, #canvas { display: none; }
 </style>
 
 <div class="wrapper" id="wrapper">
@@ -151,9 +161,7 @@
   <a href="{{ url_for('about') }}"><img src="{{ url_for('static', filename='img/tentang-kami.png') }}" class="btn btn-tentang"></a>
 
   {% if user %}
-    <!-- Profile button -->
     <img src="{{ url_for('static', filename='img/profile.png') }}" class="btn btn-profile" id="profileBtn">
-    <!-- Popup Profile -->
     <div class="profile-popup" id="profilePopup">
       <h3>{{ user.username }}</h3>
       <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
@@ -172,23 +180,21 @@
 
   <!-- Info Panel -->
   <div class="info-panel">
+    <div class="info-row"><strong>FPS</strong><div class="colon">:</div><span id="fps">0</span></div>
+    <div class="info-row"><strong>Waktu (WIB)</strong><div class="colon">:</div><span id="datetime">--/--/----</span></div>
+    <div class="info-row"><strong>Count</strong><div class="colon">:</div><span id="count">0</span></div>
     <div class="info-row">
-      <strong>FPS</strong><div class="colon">:</div><span id="fps">0</span>
-    </div>
-    <div class="info-row">
-      <strong>Waktu</strong><div class="colon">:</div><span id="datetime">--/--/---- --:--:--</span>
-    </div>
-    <div class="info-row">
-      <strong>Count</strong><div class="colon">:</div><span id="count">0</span>
+      <strong>Simpan ke DB</strong><div class="colon">:</div>
+      <button id="toggleSave" class="btn-on">ON</button>
     </div>
   </div>
 
-  <!-- hidden elemen -->
+  <!-- hidden -->
   <video id="video" autoplay playsinline></video>
   <canvas id="canvas" width="640" height="480"></canvas>
 </div>
 
-<!-- helper image -->
+<!-- background helper -->
 <img id="bg-helper" src="{{ url_for('static', filename='img/backgroundcctv.png') }}" style="display:none;">
 
 <script>
@@ -197,50 +203,34 @@
   const ctx = canvas.getContext("2d");
   const output = document.getElementById("output");
   const cameraSelect = document.getElementById("cameraSelect");
-
-  const helper = document.getElementById("bg-helper");
   const wrapper = document.getElementById("wrapper");
+
+  let currentCCTVId = null; // ✅ simpan id_cctv aktif
+
+  // === Set tinggi wrapper ===
+  const helper = document.getElementById("bg-helper");
   function setWrapperHeight() {
     const aspect = helper.naturalHeight / helper.naturalWidth;
     wrapper.style.height = wrapper.offsetWidth * aspect + "px";
-    document.body.style.height = wrapper.style.height;
   }
   helper.onload = setWrapperHeight;
   window.addEventListener("resize", setWrapperHeight);
 
-  // === POPUP PROFILE ===
+  // === Popup Profile ===
   const profileBtn = document.getElementById("profileBtn");
   const profilePopup = document.getElementById("profilePopup");
-  function positionPopup() {
-    if (!profileBtn || !profilePopup) return;
-    const rect = profileBtn.getBoundingClientRect();
-    const wrapperRect = wrapper.getBoundingClientRect();
-    profilePopup.style.top = (rect.bottom - wrapperRect.top + 10) + "px";
-    profilePopup.style.left = (rect.right - wrapperRect.left - profilePopup.offsetWidth) + "px";
-  }
-  if (profileBtn) {
+  if (profileBtn && profilePopup) {
     profileBtn.addEventListener("click", () => {
-      if (profilePopup.style.display === "block") {
-        profilePopup.style.display = "none";
-      } else {
-        profilePopup.style.display = "block";
-        positionPopup();
-      }
+      profilePopup.style.display = profilePopup.style.display === "block" ? "none" : "block";
     });
     document.addEventListener("click", (e) => {
       if (!profilePopup.contains(e.target) && e.target !== profileBtn) {
         profilePopup.style.display = "none";
       }
     });
-    window.addEventListener("resize", () => {
-      if (profilePopup.style.display === "block") positionPopup();
-    });
-    window.addEventListener("scroll", () => {
-      if (profilePopup.style.display === "block") positionPopup();
-    });
   }
 
-  // === PILIHAN KAMERA ===
+  // === Kamera ===
   async function getCameras() {
     try {
       const devices = await navigator.mediaDevices.enumerateDevices();
@@ -261,26 +251,50 @@
 
   async function startCamera(deviceId) {
     try {
-      if (!deviceId) {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        video.srcObject = stream;
-        return;
-      }
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { deviceId: { exact: deviceId } } });
-      if (video.srcObject) {
-        video.srcObject.getTracks().forEach(t => t.stop());
-      }
+      const constraints = deviceId ? { video: { deviceId: { exact: deviceId } } } : { video: true };
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      if (video.srcObject) video.srcObject.getTracks().forEach(t => t.stop());
       video.srcObject = stream;
     } catch (err) {
       console.error("Gagal akses kamera:", err);
     }
   }
 
+  // === Daftarkan kamera ke DB ===
+  async function registerCameraToDB(deviceLabel) {
+    const userGudangId = {{ user.gudang[0].id_gudang if user.gudang else "null" }};
+    if (!userGudangId || userGudangId === "null") return;
+
+    try {
+      const res = await fetch("/register_cctv", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+          nama_cctv: deviceLabel,
+          id_gudang: userGudangId
+        })
+      });
+      const data = await res.json();
+      console.log("Register CCTV response:", data);
+
+      if (data.id_cctv) {
+        currentCCTVId = data.id_cctv; // ✅ simpan id_cctv untuk deteksi
+        console.log("Current CCTV ID:", currentCCTVId);
+      }
+    } catch (err) {
+      console.error("Gagal daftar kamera:", err);
+    }
+  }
+
+  // Saat user ganti kamera di dropdown
   cameraSelect.addEventListener("change", () => {
-    startCamera(cameraSelect.value);
+    const label = cameraSelect.options[cameraSelect.selectedIndex].text;
+    registerCameraToDB(label).then(() => {
+      startCamera(cameraSelect.value);
+    });
   });
 
-  // === YOLO STREAM ===
+  // === YOLO Stream ===
   let lastTime = performance.now();
   async function sendFrame() {
     if (!video || video.readyState < 2) return;
@@ -290,6 +304,10 @@
 
     const formData = new FormData();
     formData.append("frame", blob, "frame.jpg");
+
+    if (currentCCTVId) {
+      formData.append("id_cctv", currentCCTVId); // ✅ kirim id_cctv ke backend
+    }
 
     try {
       const start = performance.now();
@@ -301,9 +319,7 @@
 
       if (response.ok) {
         const countHeader = response.headers.get("X-Count");
-        if (countHeader) {
-          document.getElementById("count").textContent = countHeader;
-        }
+        if (countHeader) document.getElementById("count").textContent = countHeader;
 
         const blobResp = await response.blob();
         if (blobResp.size > 0) {
@@ -316,10 +332,9 @@
       console.error("Fetch error:", err);
     }
 
-    // update waktu realtime
+    // update waktu
     const now = new Date();
-    const waktu = now.toLocaleDateString() + " " + now.toLocaleTimeString();
-    document.getElementById("datetime").textContent = waktu;
+    document.getElementById("datetime").textContent = now.toLocaleString("id-ID");
   }
 
   video.addEventListener("loadeddata", () => {
@@ -329,10 +344,32 @@
   getCameras().then(devs => {
     if (devs.length > 0) {
       cameraSelect.value = devs[0].deviceId;
-      startCamera(devs[0].deviceId);
+      const label = cameraSelect.options[cameraSelect.selectedIndex].text;
+      registerCameraToDB(label).then(() => {
+        startCamera(devs[0].deviceId);
+      });
     } else {
       cameraSelect.innerHTML = "<option>No cameras found</option>";
     }
+  });
+
+  // === Toggle Save ke DB ===
+  let saveToDB = true;
+  document.getElementById("toggleSave").addEventListener("click", function() {
+    saveToDB = !saveToDB;
+    fetch("/toggle_db", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({save: saveToDB})
+    }).then(res => res.json())
+      .then(data => {
+        const btn = document.getElementById("toggleSave");
+        if (data.save_to_db) {
+          btn.textContent = "ON"; btn.className = "btn-on";
+        } else {
+          btn.textContent = "OFF"; btn.className = "btn-off";
+        }
+      });
   });
 </script>
 {% endblock %}

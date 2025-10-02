@@ -47,29 +47,4 @@ class ObjectDetector:
 
                 stable_counts[class_name] += 1
 
-        # Tambahkan jumlah objek di pojok kiri atas
-        start_y = 40
-        total = sum(stable_counts.values())
-        cv2.putText(frame, f"Jumlah Objek: {total}", (10, start_y),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0,255,255), 2)
-
-        for idx, (classname, count) in enumerate(sorted(stable_counts.items())):
-            text = f"{classname} = {count}"
-            cv2.putText(frame, text, (10, start_y + (idx+1)*20),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,255,255), 2)
-
-        # ✅ Tambahkan waktu realtime (pojok kanan atas)
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-        # ✅ Hitung FPS
-        end_time = time.time()
-        fps = 1 / (end_time - start_time + 1e-6)
-
-        # Gabungkan timestamp + FPS
-        overlay_text = f"{timestamp} | FPS: {fps:.2f}"
-        (tw, th), _ = cv2.getTextSize(overlay_text, cv2.FONT_HERSHEY_SIMPLEX, 0.6, 2)
-        cv2.putText(frame, overlay_text,
-                    (frame.shape[1] - tw - 10, 30),  # kanan atas
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
-
-        return frame
+        return frame, stable_counts

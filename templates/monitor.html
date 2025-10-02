@@ -178,49 +178,75 @@
   }
 
   // === KAMERA ===
-  const monitorVideo = document.getElementById("monitor-video");
-  const cameraSelect = document.getElementById("cameraSelect");
-  let currentStream = null;
+    const monitorVideo = document.getElementById("monitor-video");
+    const cameraSelect = document.getElementById("cameraSelect");
+    let currentStream = null;
+    const userGudangId = {{ user.gudang[0].id_gudang if user.gudang else "null" }};
 
-  async function startCamera(deviceId) {
-    if (currentStream) {
-      currentStream.getTracks().forEach(track => track.stop());
-    }
-    try {
-      const constraints = deviceId 
-        ? { video: { deviceId: { exact: deviceId } } } 
-        : { video: true };
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      currentStream = stream;
-      monitorVideo.srcObject = stream;
-    } catch (err) {
-      alert("Gagal akses kamera: " + err.message);
-    }
-  }
-
-  async function loadCameras() {
-    try {
-      const devices = await navigator.mediaDevices.enumerateDevices();
-      const videoDevices = devices.filter(device => device.kind === "videoinput");
-      cameraSelect.innerHTML = "";
-      videoDevices.forEach((device, index) => {
-        const option = document.createElement("option");
-        option.value = device.deviceId;
-        option.text = device.label || `Camera ${index + 1}`;
-        cameraSelect.appendChild(option);
-      });
-      if (videoDevices.length > 0) {
-        startCamera(videoDevices[0].deviceId);
-      } else {
-        cameraSelect.innerHTML = "<option>No cameras found</option>";
+    // === Register CCTV ke database ===
+    async function registerCamera(namaCctv, idGudang) {
+      try {
+        const res = await fetch("/register_cctv", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            nama_cctv: namaCctv,
+            id_gudang: idGudang
+          })
+        });
+        const data = await res.json();
+        console.log("✅ CCTV terdaftar:", data);
+      } catch (err) {
+        console.error("❌ Gagal register CCTV:", err);
       }
-    } catch (err) {
-      console.error("Gagal memuat kamera:", err);
     }
-  }
-  cameraSelect.addEventListener("change", () => {
-    startCamera(cameraSelect.value);
-  });
-  window.addEventListener("DOMContentLoaded", loadCameras);
+
+    async function startCamera(deviceId, deviceLabel) {
+      if (currentStream) {
+        currentStream.getTracks().forEach(track => track.stop());
+      }
+      try {
+        const constraints = deviceId
+          ? { video: { deviceId: { exact: deviceId } } }
+          : { video: true };
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        currentStream = stream;
+        monitorVideo.srcObject = stream;
+
+        // 📌 daftar kamera ke DB
+        registerCamera(deviceLabel, userGudangId);
+
+      } catch (err) {
+        alert("Gagal akses kamera: " + err.message);
+      }
+    }
+
+    async function loadCameras() {
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const videoDevices = devices.filter(device => device.kind === "videoinput");
+        cameraSelect.innerHTML = "";
+        videoDevices.forEach((device, index) => {
+          const option = document.createElement("option");
+          option.value = device.deviceId;
+          option.text = device.label || `Camera ${index + 1}`;
+          cameraSelect.appendChild(option);
+        });
+        if (videoDevices.length > 0) {
+          startCamera(videoDevices[0].deviceId, videoDevices[0].label || `Camera 1`);
+        } else {
+          cameraSelect.innerHTML = "<option>No cameras found</option>";
+        }
+      } catch (err) {
+        console.error("Gagal memuat kamera:", err);
+      }
+    }
+
+    cameraSelect.addEventListener("change", () => {
+      const selected = cameraSelect.options[cameraSelect.selectedIndex];
+      startCamera(cameraSelect.value, selected.text);
+    });
+
+    window.addEventListener("DOMContentLoaded", loadCameras);
 </script>
 {% endblock %}
