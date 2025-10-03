@@ -260,7 +260,7 @@ def detect_api():
 
         object_name = "none"
         if counts:
-            object_name = list(counts.keys())[0]
+            object_name = list(counts.keys())[0]  # ambil nama objek hasil deteksi
 
         current_time = time.time()
 
@@ -269,10 +269,19 @@ def detect_api():
             # cek apakah CCTV dengan id ini valid
             cctv = CCTV.query.get(id_cctv)
             if cctv:
+                # Cari id_karung dari tabel Karung berdasarkan nama
+                karung = Karung.query.filter_by(nama_karung=object_name).first()
+                if not karung:
+                    # kalau nama karung belum ada → auto insert
+                    karung = Karung(nama_karung=object_name)
+                    db.session.add(karung)
+                    db.session.commit()
+
+                # Simpan deteksi
                 new_deteksi = Deteksi(
                     waktu=datetime.now(WIB),
-                    id_cctv=id_cctv,         
-                    id_karung=None,
+                    id_cctv=id_cctv,
+                    id_karung=karung.id_karung, 
                     total_karung=total_count,
                     data_encrypted=None
                 )
@@ -289,8 +298,6 @@ def detect_api():
     except Exception as e:
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
-
-
 
 if __name__ == "__main__":
     app.run(debug=True)
