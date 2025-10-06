@@ -1,5 +1,70 @@
 {% extends "base.html" %}
+{% block title %}Tentang Kami{% endblock %}
 {% block content %}
-<h2>Tentang Kami</h2>
-<p>Halaman ini akan berisi informasi tentang perusahaan/proyek Anda.</p>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    background: #000;
+    font-family: 'Poppins', sans-serif;
+  }
+  body::-webkit-scrollbar { display: none; }
+  body { -ms-overflow-style: none; scrollbar-width: none; }
+
+  .wrapper {
+    position: relative;
+    width: 100%;
+    background: url("{{ url_for('static', filename='img/bg_tentangkami.png') }}") no-repeat top center;
+    background-size: 100% auto;
+  }
+
+  .btn {
+    position: absolute;
+    cursor: pointer;
+    transform: translate(-50%, -50%);
+  }
+
+  .btn-cctv { top: 7%; left: 44%; width: 5.5%; }
+  .btn-deteksi { top: 6.9%; left: 54%; width: 7%; }
+  .btn-dashboard { top: 7%; left: 66.5%; width: 10%; }
+  .btn-tentang { top: 7.2%; left: 81.5%; width: 12.5%; }
+
+    .logo-gcs {
+    position: absolute;
+    top: 0.05%;
+    left: 1.45%;
+    width: 10.25%;  
+    cursor: pointer;
+  }
+</style>
+
+<div class="wrapper" id="wrapper">
+  <!-- LOGO -->
+  <a href="{{ url_for('home') }}">
+    <img src="{{ url_for('static', filename='img/logo_gcs.png') }}" class="logo-gcs" alt="Logo GCS">
+  </a>
+
+  <!-- Tombol navigasi -->
+  <a href="{{ url_for('monitor') }}"><img src="{{ url_for('static', filename='img/CCTV.png') }}" class="btn btn-cctv"></a>
+  <a href="{{ url_for('detect') }}"><img src="{{ url_for('static', filename='img/deteksi.png') }}" class="btn btn-deteksi"></a>
+  <a href="{{ url_for('dashboard') }}"><img src="{{ url_for('static', filename='img/dashboard.png') }}" class="btn btn-dashboard"></a>
+  <a href="{{ url_for('about') }}"><img src="{{ url_for('static', filename='img/tentang-kami.png') }}" class="btn btn-tentang"></a>
+</div>
+
+<img id="bg-helper" src="{{ url_for('static', filename='img/bg_tentangkami.png') }}" style="display:none;">
+
+<script>
+  const helper = document.getElementById("bg-helper");
+  const wrapper = document.getElementById("wrapper");
+
+  function setWrapperHeight() {
+    const aspect = helper.naturalHeight / helper.naturalWidth;
+    wrapper.style.height = wrapper.offsetWidth * aspect + "px";
+    document.body.style.height = wrapper.style.height;
+  }
+
+  helper.onload = setWrapperHeight;
+  window.addEventListener("resize", setWrapperHeight);
+</script>
 {% endblock %}
