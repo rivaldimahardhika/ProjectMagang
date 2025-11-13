@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% block title %}Dashboard Gudang{% endblock %}
+{% block content %}
+<style>
+  @font-face {
+    font-family: 'Poppins';
+    src: url('{{ url_for('static', filename="font/Poppins-Regular.ttf") }}') format('truetype');
+  }
+
+  body {
+    margin: 0;
+    background: url("{{ url_for('static', filename='img/background_login.png') }}") no-repeat top center;
+    background-size: cover;
+    font-family: 'Poppins', sans-serif;
+  }
+
+  .navbar {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 2rem;
+    padding: 1rem;
+    background-color: rgba(91, 134, 63, 0.9);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .navbar a {
+    color: #FFCE5E;
+    font-weight: 600;
+    text-decoration: none;
+    transition: 0.2s;
+  }
+
+  .navbar a:hover { color: #fff; }
+
+  /* Profil di pojok kanan */
+  .profile-wrapper {
+    position: absolute;
+    right: 2%;
+  }
+
+  .profile-icon {
+    width: 40px;
+    cursor: pointer;
+    border-radius: 50%;
+  }
+
+  /* Popup Profile */
+  .profile-popup {
+    position: absolute;
+    top: 65px;
+    right: 15px;
+    background: #5b863f;
+    border-radius: 15px;
+    padding: 12px;
+    display: none;
+    box-shadow: 0px 4px 10px rgba(0,0,0,0.3);
+    z-index: 999;
+    width: 200px;
+  }
+
+  .profile-popup h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: normal;
+    color: #FFCE5E;
+    text-align: center;
+  }
+
+  .logout-btn {
+    display: block;
+    text-align: center;
+    text-decoration: none;
+    margin-top: 10px;
+    width: 100%;
+    padding: 8px 0;
+    background: #faa003;
+    color: #fff;
+    border-radius: 8px;
+    font-size: 14px;
+  }
+
+  .logout-btn:hover {
+    background: #fa003f;
+  }
+
+  iframe {
+    width: 100%;
+    height: 90vh;
+    border: none;
+    border-radius: 20px;
+  }
+</style>
+
+<div class="navbar">
+  <a href="{{ url_for('home') }}">Home</a>
+  <a href="{{ url_for('monitor') }}">CCTV</a>
+  <a href="{{ url_for('detect') }}">Deteksi</a>
+  <a href="{{ url_for('dashboard') }}">Dashboard</a>
+  <a href="{{ url_for('about') }}">Tentang</a>
+
+  {% if user %}
+  <div class="profile-wrapper">
+    <img src="{{ url_for('static', filename='img/profile.png') }}" class="profile-icon" id="profileBtn">
+    <div class="profile-popup" id="profilePopup">
+      <h3>{{ user.username }}</h3>
+      <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<iframe 
+  src="{{ iframe_url }}"
+  frameborder="0"
+  width="100%"
+  height="800px"
+  allowfullscreen>
+</iframe>
+
+<script>
+  // Popup Profile
+  const profileBtn = document.getElementById("profileBtn");
+  const profilePopup = document.getElementById("profilePopup");
+
+  if (profileBtn) {
+    profileBtn.addEventListener("click", () => {
+      profilePopup.style.display = profilePopup.style.display === "block" ? "none" : "block";
+    });
+    document.addEventListener("click", (e) => {
+      if (!profilePopup.contains(e.target) && e.target !== profileBtn) {
+        profilePopup.style.display = "none";
+      }
+    });
+  }
+</script>
+{% endblock %}
